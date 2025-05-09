@@ -6,6 +6,7 @@ import { DangerModule } from '../danger/danger.module';
 @Module({
   imports: [HttpModule, DangerModule],
   controllers: [SafetyController],
-  providers: [SafetyService]
+  providers: [SafetyService],
+  exports: [SafetyService],
 })
 export class SafetyModule {}

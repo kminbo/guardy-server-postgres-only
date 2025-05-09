@@ -27,10 +27,11 @@ export class AuthService {
                 emContactName: signupDto.emContactName,
                 emContactNumber: signupDto.emContactNumber,
                 password: hashedPassword,
+                fcmToken: signupDto.fcmToken,
             },
         });
 
-        return {message: true};
+        return {success: true};
     }
 
     async login(loginDto: LoginDto) {
@@ -63,6 +64,7 @@ export class AuthService {
             difficulties: user.difficulties,
             emContactName: user.emContactName,
             emContactNumber: user.emContactNumber,
+            fcmToken: user.fcmToken,
         };        
     }
 
@@ -86,6 +88,7 @@ export class AuthService {
             difficulties: user.difficulties,
             emContactName: user.emContactName,
             emContactNumber: user.emContactNumber,
+            fcmToken: user.fcmToken,
         };
     }
 }

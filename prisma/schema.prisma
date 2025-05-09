@@ -47,4 +47,7 @@ model User{
   nextCheckinTime DateTime?
   isEmergencyActive Boolean @default(false) //긴급대응 중 상태 (3단계 알림까지 무응답한 경우)
   //비상 연락처로 sms 발송 후 계속 모니터링하지 않고 종료해야 하니까.
+
+  //FCM 토큰
+  fcmToken String?
 }

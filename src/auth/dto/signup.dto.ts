@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsString, IsNotEmpty, IsInt, IsOptional } from "class-validator";
 
 export class SignupDto {
@@ -51,4 +51,9 @@ export class SignupDto {
     @IsString()
     @IsNotEmpty()
     password: string;
+
+    @ApiPropertyOptional({ description: 'FCM 토큰' })
+    @IsString()
+    @IsOptional()
+    fcmToken?: string;
 }

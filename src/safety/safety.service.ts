@@ -103,13 +103,14 @@ export class SafetyService {
             where: { id: userId },
         });
 
-        if (user.mode === 'safe') {
-            throw new BadRequestException('User is in safe mode');
-        }
-
-        if (!user) {
+        if (user === null) {
             throw new NotFoundException('User not found');
         }
+
+        if (user.mode === 'sleeping') {
+            throw new BadRequestException('User is in sleeping mode');
+        }
+
 
         //FCM 전송 로직 
         if (!user.fcmToken){
