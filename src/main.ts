@@ -3,8 +3,6 @@ import { AppModule } from './app.module';
 import { SwaggerModule } from '@nestjs/swagger';
 import { DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { RequestTransformInterceptor } from './common/interceptors/request.interceptor';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -24,11 +22,6 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalInterceptors(
-    new RequestTransformInterceptor(),
-    new TransformInterceptor(),
-  );
-  
   const config = new DocumentBuilder()
     .setTitle('Guardy API') //api 이름
     .setDescription('API documentation for Guardy') //api 설명

@@ -1,7 +1,6 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateLocationDto } from './dto/update-location.dto';
-import { SafetyCheckQueue } from './safety-check.queue';
 import { ChangeModeDto } from 'src/danger/dto/change-mode.dto';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
@@ -18,7 +17,6 @@ export class SafetyService {
 
     constructor(
         private readonly prisma: PrismaService, 
-        private readonly safetyCheckQueue: SafetyCheckQueue,
         private readonly httpService: HttpService,
         private readonly dangerService: DangerService,
     ) {}
@@ -26,32 +24,43 @@ export class SafetyService {
     async changeMode(userId: string, dto: ChangeModeDto) {
         const { mode } = dto;
 
-        await this.prisma.user.update({
-          where: { id: userId },
-          data: { mode: mode }
-        });
-
+        //모드 변경 시 안전 단계, 긴급 연락처 알림 활성화 여부 초기화
         if (mode === 'safe') {
-            await this.safetyCheckQueue.addJob(userId); //안전 모드 시 큐 다시 등록
-        }
-        else {
-            await this.safetyCheckQueue.removeJob(userId); //취침 모드 시 큐 제거
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    mode: 'safe',
+                    nextCheckinTime: new Date(Date.now() + 1000 * 60 * 60 * 6), //6시간 후
+                    safetyStage: 1,
+                    isEmergencyActive: false,
+                },
+            });
+        } else if (mode === 'sleeping') {
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    mode: 'sleeping',
+                    nextCheckinTime: null,
+                    safetyStage: 1,
+                    isEmergencyActive: false,
+                },
+            });
         }
 
         return { success: true };
     }
 
-    //사용자 안전 확인 응답
+    //사용자가 안전 확인 알림에 응답했을 때 안전 단계, isEmergencyActive 초기화, lastCheckinTime, nextCheckinTime 업데이트
     async checkin(userId: string) {
         await this.prisma.user.update({
             where: { id: userId },
             data: {
                 safetyStage: 1,
                 lastCheckinTime: new Date(),
+                nextCheckinTime: new Date(Date.now() + 1000 * 60 * 60 * 6), //6시간 후
+                isEmergencyActive: false,
             },
         });
-
-        await this.safetyCheckQueue.addJob(userId); //응답 시 Queue 리셋
 
         return {success: true};
     }
@@ -94,17 +103,55 @@ export class SafetyService {
             where: { id: userId },
         });
 
+        if (user.mode === 'safe') {
+            throw new BadRequestException('User is in safe mode');
+        }
+
         if (!user) {
             throw new NotFoundException('User not found');
         }
 
-        //여기서 FCM 전송 로직 넣기
+        //FCM 전송 로직 
+        if (!user.fcmToken){
+            this.logger.warn(`No fcm token for user ${user.nickname}`);
+            return {success: false};
+        }
+
+        const title = '🔔 수동 긴급 안전 알림';
+        const body = '긴급 안전 알림이 트리거되었습니다. 즉시 응답해 주세요.';
+
+        try {
+            await firstValueFrom(this.httpService.post(
+                'https://fcm.googleapis.com/fcm/send',
+                {
+                to: user.fcmToken,
+                notification: {
+                    title: title,
+                    body: body,
+                },
+                data: {
+                    stage: 'manual_checkin',
+                },
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `key=${process.env.FCM_SERVER_KEY}`,
+                },
+            },
+            ));
+        } catch (error) {
+            this.logger.error('Error sending manual checkin FCM notification:', error);
+            return {success: false};
+        }
+
+        this.logger.log(`MANUAL FCM notification sent to ${user.nickname} (stage: ${user.safetyStage})`);
 
         return {success: true};
     }
 
     //안전 확인 체크 알림 보내기
-    //이 함수는 BullMQ에서 주기적으로 호출됨. queue가 이걸 자동으로 호출하도록 설계
+    //이 함수는 BullMQ에서 주기적으로(5분마다) 호출됨
     async handleSafetyCheck(userId: string) {
         const user = await this.prisma.user.findUnique({
             where: { id: userId },
@@ -149,7 +196,10 @@ export class SafetyService {
                     await this.alertEmergencyContacts(updatedUser);
                     await this.prisma.user.update({
                         where: { id: userId },
-                        data: { safetyStage: 1 },
+                        data: {
+                            isEmergencyActive: true,
+                            nextCheckinTime: null,
+                            },
                     });
                 }
             }, 15 * 60 * 1000);

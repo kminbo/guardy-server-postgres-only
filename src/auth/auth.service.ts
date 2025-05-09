@@ -55,14 +55,14 @@ export class AuthService {
             success: true,
             token,
             nickname: user.nickname,
-            phone_number: user.phoneNumber,
+            phoneNumber: user.phoneNumber,
             nationality: user.nationality,
-            birth_year: user.birthYear,
+            birthYear: user.birthYear,
             language: user.language,
             sex: user.sex,
             difficulties: user.difficulties,
-            em_contact_name: user.emContactName,
-            em_contact_number: user.emContactNumber,
+            emContactName: user.emContactName,
+            emContactNumber: user.emContactNumber,
         };        
     }
 
@@ -78,14 +78,14 @@ export class AuthService {
         return {
             success: true,
             nickname: user.nickname,
-            phone_number: user.phoneNumber,
+            phoneNumber: user.phoneNumber,
             nationality: user.nationality,
-            birth_year: user.birthYear,
+            birthYear: user.birthYear,
             language: user.language,
             sex: user.sex,
             difficulties: user.difficulties,
-            em_contact_name: user.emContactName,
-            em_contact_number: user.emContactNumber,
+            emContactName: user.emContactName,
+            emContactNumber: user.emContactNumber,
         };
     }
 }
