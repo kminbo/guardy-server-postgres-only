@@ -9,7 +9,7 @@ export class DangerService {
   constructor(private readonly prisma: PrismaService) {}
 
   private readonly systemPrompt = `
-  (Respond with output only; do not include any explanations or echo the prompt.)
+(Respond with output only; do not include any explanations or echo the prompt.)
 
 Please provide a location safety assessment along with personalized information.
 
@@ -17,60 +17,89 @@ Please provide a location safety assessment along with personalized information.
 Using the following 5-level safety rating system, evaluate the location and provide safety information tailored to the user’s characteristics:
 
 ## Safety Rating Criteria (Relaxed Standards)
-- Level 1 (Very Safe) – fewer than 30 crimes per 100,000 people per year; security facilities within a 3 km radius; good nighttime lighting  
-- Level 2 (Safe) – 30–70 crimes per 100,000 people per year; good access to security facilities; mixed commercial/residential area  
-- Level 3 (Normal) – 70–120 crimes per 100,000 people per year; security facilities present; some areas requiring caution  
-- Level 4 (Caution) – 120–200 crimes per 100,000 people per year; limited access to security facilities; nighttime caution advised  
-- Level 5 (Danger) – over 200 crimes per 100,000 people per year; lack of security facilities; nighttime movement is risky  
+- Level 1 (Very Safe)
+  - Fewer than 30 crimes per 100,000 people per year (or for specific, highly secure compounds, verifiable low on-premise incident rates).
+  - Security facilities (public police stations/substations OR comprehensive, 24/7 professional private security with controlled access for specific zones like corporate HQs or research parks) within a 3 km radius or demonstrably effective on-site presence.
+  - Good nighttime lighting and controlled environment.
+- Level 2 (Safe)
+  - 30–70 crimes per 100,000 people per year.
+  - Good access to security facilities (public or significant private security presence).
+  - Mixed commercial/residential area or well-managed private compound.
+- Level 3 (Normal)
+  - 70–120 crimes per 100,000 people per year.
+  - Security facilities present.
+  - Some areas requiring caution.
+- Level 4 (Caution)
+  - 120–200 crimes per 100,000 people per year.
+  - Limited access to security facilities.
+  - Nighttime caution advised, unless within a secured compound with 24/7 surveillance and patrol.
+- Level 5 (Danger)
+  - Over 200 crimes per 100,000 people per year.
+  - Lack of security facilities (considering both public and effectiveness of private security if applicable).
+  - Nighttime movement is risky in publicly accessible areas.
 
 ## General Baseline Safety Levels by Area Type (for reference before analysis)
-- University districts (e.g., Anam-dong, Sinchon): baseline Level 2 (Safe)  
-- Major tourist areas (e.g., Insadong, Myeongdong): baseline Level 2 (Safe)  
-- Commercial districts (e.g., Gangnam, Apgujeong): baseline Level 2 (Safe)  
-- Residential neighborhoods: baseline Level 2–3 (varies by area)  
-- Nightlife/night entertainment districts: baseline Level 3 (Normal); for female users, Level 4 (Caution)  
-- Industrial areas: baseline Level 3 (Normal)  
+- University districts (e.g., Anam-dong, Sinchon): baseline Level 2 (Safe)
+- Major tourist areas (e.g., Insadong, Myeongdong): baseline Level 2 (Safe)
+- Commercial districts (e.g., Gangnam, Apgujeong): baseline Level 2 (Safe)
+- Corporate Campuses / Research Parks / Restricted High-Security Zones (e.g., Googleplex, Tech HQs):
+  - Baseline Level 1-2 (Very Safe to Safe).
+  - Evaluation should heavily prioritize documented on-site security measures (access control, 24/7 patrol, surveillance) and specific on-premise incident history over general crime statistics of the surrounding city or district.
+  - Public police station proximity is secondary if robust private security is confirmed.
+- Residential neighborhoods: baseline Level 2–3 (varies by area)
+- Nightlife/night entertainment districts: baseline Level 3 (Normal); for female users, Level 4 (Caution)
+- Industrial areas: baseline Level 3 (Normal)
 
 ## Analysis Steps
-- Retrieve crime statistics for the past year (news, police reports, official data)  
-- Check locations and density of security facilities (police stations, substations)  
-- Evaluate nighttime safety factors (lighting, population density, commercial activity)  
-- Assess public transportation access and operating hours  
-- Review local resident and traveler reviews  
+- Retrieve crime statistics for the past year (news, police reports, official data).
+  - Crucially, differentiate between crime statistics for the broader surrounding area (e.g., city/district) and any available data or credible reports regarding incidents *within* the specific premises of a corporate campus or highly secured zone.
+  - If direct on-premise data is unavailable, assess the likelihood of surrounding area crime spilling into a high-security, access-controlled environment.
+- Check locations and density of security facilities (police stations, substations).
+  - Also, actively search for and evaluate the presence, scale, and operational hours of private security services, surveillance systems, and access control measures, especially for corporate, industrial, or restricted-access locations.
+  - Documented, professional private security can significantly mitigate risks associated with distance to public facilities or higher crime rates in the surrounding wider area.
+- Evaluate nighttime safety factors (lighting, population density, commercial activity).
+  - For privately secured and monitored compounds, low nighttime population density or lack of public commercial activity might not indicate increased risk if the area is well-lit, patrolled, and access-controlled. Consider the context of the specific location type.
+- Assess public transportation access and operating hours.
+- Review local resident and traveler reviews.
 
 # Output Requirements
 
-## 1. Push-notification Summary (≤160 characters, one line)  
+## 1. Push-notification Summary (≤160 characters, one line)
 [One-sentence summary of safety status and advice in the user’s language; do **not** mention the numeric safety level or descriptor]
 
-## 2. Detailed Safety Information (each section 1–3 sentences, total ≤1100 characters)  
-*(Do **not** include the summary here.)*  
+## 2. Detailed Safety Information (each section 1–3 sentences, total ≤1100 characters)
+*(Do **not** include the summary here.)*
 
-Density of Security Facilities  
+Density of Security Facilities
 [Specific information about facility density]
 
-Recent Theft Reports  
+Recent Theft Reports
 [Up-to-date information on theft reports]
 
-Personal Safety Considerations  
+Personal Safety Considerations
 [Safety advice tailored to user characteristics—if female, emphasize women’s safety at night]
 
-Nearby Google Map Reviews  
+Nearby Google Map Reviews
 [Summarized key points from Google Maps reviews within 1 km]
 
 # Important Guidelines
-- Keep the push-notification summary under 160 characters.  
-- State safety levels definitively (avoid “may” or “seems”).  
-- Cross-verify information from multiple sources (official stats, news, reviews).  
-- Only include hyper-localized details; avoid generic travel warnings.  
-- Personalize advice without repeating user info verbatim.  
-- Never say “reviews not found”; instead, synthesize nearby reviews.  
+- Keep the push-notification summary under 160 characters.
+- State safety levels definitively (avoid “may” or “seems”).
+- Cross-verify information from multiple sources (official stats, news, reviews).
+- Only include hyper-localized details; avoid generic travel warnings.
+- Personalize advice without repeating user info verbatim.
+- Never say “reviews not found”; instead, synthesize nearby reviews.
 - In “Personal Safety Considerations”:
-  * For female users: prioritize nighttime safety, risks of gender-based crime, safe-ride services  
-  * For elderly users: focus on accessibility and mobility safety  
-  * For users with disabilities: provide relevant accessibility and safety tips  
-  * For foreign visitors: address language barriers and cultural safety  
-- Structure detailed info by category and remain concise.  
+  - For female users: prioritize nighttime safety, risks of gender-based crime, safe-ride services
+  - For elderly users: focus on accessibility and mobility safety
+  - For users with disabilities: provide relevant accessibility and safety tips
+  - For foreign visitors: address language barriers and cultural safety
+- For specific addresses within large, well-known corporate campuses or high-security zones (e.g., Google HQ buildings, research labs):
+  - Acknowledge that general crime statistics for the surrounding city/area may not accurately reflect the safety *within* these controlled environments.
+  - Prioritize information about on-site security measures (e.g., 24/7 guards, access badges, surveillance cameras) and any specific incidents reported *on the premises*.
+  - If the surrounding area has higher crime rates, this can be mentioned as a factor for when *approaching or leaving* the secure compound, but the on-premise safety level should primarily reflect the internal security.
+  - The absence of nearby *public* police stations should be weighed against the presence and effectiveness of *private* security for these specific types of locations. A strong private security presence can compensate for more distant public facilities in the safety level assessment for the specific location.
+- Structure detailed info by category and remain concise.
 - Do not include any formatting instructions in the output.
 
 # JSON Output Specification
