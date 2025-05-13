@@ -3,9 +3,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateLocationDto } from './dto/update-location.dto';
 import { ChangeModeDto } from 'src/danger/dto/change-mode.dto';
 import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
+import { async, firstValueFrom } from 'rxjs';
 import { DangerService } from 'src/danger/danger.service';
 import { Twilio } from 'twilio';
+import { google } from 'googleapis';
 
 @Injectable()
 export class SafetyService {
@@ -20,6 +21,15 @@ export class SafetyService {
         private readonly httpService: HttpService,
         private readonly dangerService: DangerService,
     ) {}
+
+    async getAccessToken() {
+        const auth = new google.auth.GoogleAuth({
+            scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+        });
+        const client = await auth.getClient();
+        const accessToken = await client.getAccessToken();
+        return accessToken.token;
+    }
 
     async changeMode(userId: string, dto: ChangeModeDto) {
         const { mode } = dto;
@@ -122,8 +132,10 @@ export class SafetyService {
         const body = '긴급 안전 알림이 트리거되었습니다. 즉시 응답해 주세요.';
 
         try {
+            const accessToken = await this.getAccessToken();
+
             await firstValueFrom(this.httpService.post(
-                'https://fcm.googleapis.com/fcm/send',
+                'https://fcm.googleapis.com/v1/projects/titanium-gantry-458811-s3/messages:send',
                 {
                 to: user.fcmToken,
                 notification: {
@@ -137,7 +149,7 @@ export class SafetyService {
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `key=${process.env.FCM_SERVER_KEY}`,
+                    Authorization: `Bearer ${accessToken}`,
                 },
             },
             ));
