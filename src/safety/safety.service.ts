@@ -137,15 +137,17 @@ export class SafetyService {
             await firstValueFrom(this.httpService.post(
                 'https://fcm.googleapis.com/v1/projects/titanium-gantry-458811-s3/messages:send',
                 {
-                to: user.fcmToken,
-                notification: {
-                    title: title,
-                    body: body,
+                    message: {
+                        token: user.fcmToken,
+                        notification: {
+                            title: title,
+                            body: body,
+                        },
+                        data: {
+                            stage: 'manual_checkin',
+                        },
+                    }
                 },
-                data: {
-                    stage: 'manual_checkin',
-                },
-            },
             {
                 headers: {
                     'Content-Type': 'application/json',
@@ -154,7 +156,7 @@ export class SafetyService {
             },
             ));
         } catch (error) {
-            this.logger.error('Error sending manual checkin FCM notification:', error);
+            this.logger.error('Error sending manual checkin FCM notification:', error.response?.data?.error?.message ?? error.message);
             return {success: false};
         }
 
