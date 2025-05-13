@@ -230,27 +230,60 @@ export class SafetyService {
 
         const {title, body} = this.getSafetyMessage(user, stage);
 
-        await firstValueFrom(this.httpService.post(
-            'https://fcm.googleapis.com/fcm/send',
-            {
-                to: user.fcmToken,
-                notification: {
-                    title: title,
-                    body: body,
+        // await firstValueFrom(this.httpService.post(
+        //     'https://fcm.googleapis.com/fcm/send',
+        //     {
+        //         to: user.fcmToken,
+        //         notification: {
+        //             title: title,
+        //             body: body,
+        //         },
+        //         data: {
+        //             stage: stage.toString(),
+        //         },
+        //     },
+        //     {
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             Authorization: `key=${process.env.FCM_SERVER_KEY}`,
+        //         },
+        //     },
+        // ));
+
+        
+        try {
+            const accessToken = await this.getAccessToken();
+
+            await firstValueFrom(this.httpService.post(
+                'https://fcm.googleapis.com/v1/projects/titanium-gantry-458811-s3/messages:send',
+                {
+                    message: {
+                        token: user.fcmToken,
+                        notification: {
+                            title: title,
+                            body: body,
+                        },
+                        data: {
+                            stage: stage.toString(),
+                        },
+                    }
                 },
-                data: {
-                    stage: stage.toString(),
-                },
-            },
             {
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `key=${process.env.FCM_SERVER_KEY}`,
+                    Authorization: `Bearer ${accessToken}`,
                 },
             },
-        ));
+            ));
 
-        this.logger.log(`FCM notification sent to ${user.nickname} (stage: ${stage})`);
+            this.logger.log(`FCM notification sent to ${user.nickname} (stage: ${stage})`);
+            return {success: true};
+            
+        } catch (error) {
+            this.logger.error('Error sending manual checkin FCM notification:', error.response?.data?.error?.message ?? error.message);
+            return {success: false};
+        }
+
     }
 
         // 안전 알림 메시지 생성
