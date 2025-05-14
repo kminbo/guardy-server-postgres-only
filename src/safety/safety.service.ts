@@ -229,27 +229,6 @@ export class SafetyService {
         }
 
         const {title, body} = this.getSafetyMessage(user, stage);
-
-        // await firstValueFrom(this.httpService.post(
-        //     'https://fcm.googleapis.com/fcm/send',
-        //     {
-        //         to: user.fcmToken,
-        //         notification: {
-        //             title: title,
-        //             body: body,
-        //         },
-        //         data: {
-        //             stage: stage.toString(),
-        //         },
-        //     },
-        //     {
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //             Authorization: `key=${process.env.FCM_SERVER_KEY}`,
-        //         },
-        //     },
-        // ));
-
         
         try {
             const accessToken = await this.getAccessToken();

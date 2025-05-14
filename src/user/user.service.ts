@@ -10,8 +10,10 @@ export class UserService {
     async updateProfile(userId: string, updateProfileDto: UpdateProfileDto) {
         const updateData = {...updateProfileDto};
 
-        if (updateData.password) {
+        if (updateData.password && updateData.password.trim() !== '') {
             updateData.password = await bcrypt.hash(updateData.password, 10);
+        } else {
+            delete updateData.password;
         }
         
         await this.prisma.user.update({
