@@ -174,6 +174,7 @@ export class SafetyService {
         
         if (!user) return;
         if (user.mode === 'sleeping') return;
+        if (user.isEmergencyActive) return;
 
         const now = new Date();
         const elapsedTime = now.getTime() - (user.lastCheckinTime?.getTime() || 0);
@@ -201,23 +202,25 @@ export class SafetyService {
             });
         }
         else if (user.safetyStage === 3 && elapsedHours >= 7.5) {
-            //30분 추가 경과(7.5시간) -> 3단계 체크인 알림
+            //30분 추가 경과(7.5시간)-> 3단계 체크인 알림
             await this.sendSafetyPush(user, 3);
-
-            // 15분 후에 긴급 연락처 알림 전송
-            setTimeout(async () => {
-                const updatedUser = await this.prisma.user.findUnique({ where: { id: userId } });
-                if (updatedUser && updatedUser.safetyStage === 3) {
-                    await this.alertEmergencyContacts(updatedUser);
-                    await this.prisma.user.update({
-                        where: { id: userId },
-                        data: {
-                            isEmergencyActive: true,
-                            nextCheckinTime: null,
-                            },
-                    });
-                }
-            }, 15 * 60 * 1000);
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    safetyStage: 33, //3단계 알림 보냈음
+                },
+            });
+        }
+        else if (user.safetyStage === 33 && elapsedHours >= 7.75) {
+            //15분 추가 경과(7.75시간) -> 긴급 연락처 알림
+            await this.alertEmergencyContacts(user);
+            await this.prisma.user.update({
+                where: { id: userId },
+                data: {
+                    isEmergencyActive: true,
+                    nextCheckinTime: null,
+                },
+            }); 
         }
     }
 
